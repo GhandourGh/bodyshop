@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bodyshop AI — Model Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:       #0a0a0a;
+    --surface:  #111111;
+    --border:   #222222;
+    --accent:   #e8ff47;
+    --accent2:  #ff6b35;
+    --muted:    #444444;
+    --text:     #e0e0e0;
+    --text-dim: #666666;
+    --success:  #39d353;
+    --danger:   #ff4444;
+    --mono:     'IBM Plex Mono', monospace;
+    --sans:     'IBM Plex Sans', sans-serif;
+    --r:        4px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-weight: 600;
+    color: #000;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  header span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    display: inline-block;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── Nav ── */
+  nav {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  nav a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 12px 16px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color .2s, border-color .2s;
+  }
+  nav a:hover { color: var(--text); }
+  nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Layout ── */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-header .method {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: #1a2a0a;
+    color: var(--accent);
+    border: 1px solid #2a3a1a;
+  }
+  .card-header .method.get {
+    background: #0a1a2a;
+    color: #47aaff;
+    border-color: #1a2a3a;
+  }
+  .card-header .path {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+  .card-header .desc {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .card-body { padding: 20px; }
+
+  /* ── Form elements ── */
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .2s;
+    appearance: none;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus { border-color: var(--muted); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  /* Slider */
+  .slider-row { display: flex; align-items: center; gap: 12px; }
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  .slider-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 32px;
+    text-align: right;
+  }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Buttons ── */
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: var(--r);
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { opacity: .9; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-group { display: flex; gap: 6px; }
+  .btn-sm {
+    padding: 6px 14px;
+    font-size: 11px;
+    background: var(--bg);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-sm.active, .btn-sm:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Toggle */
+  .toggle-row { display: flex; gap: 6px; }
+  .toggle-btn {
+    flex: 1;
+    padding: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    color: var(--text-dim);
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+  }
+  .toggle-btn.active { background: #1a2a0a; color: var(--accent); border-color: var(--accent); }
+
+  /* ── Divider ── */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* ── Result area ── */
+  .result { margin-top: 16px; }
+  .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 12px 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box {
+    background: #1a0a0a;
+    border: 1px solid #3a1a1a;
+    border-radius: var(--r);
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--danger);
+    display: none;
+  }
+
+  /* ── Result components ── */
+  .kv {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .kv:last-child { border-bottom: none; }
+  .kv-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    min-width: 120px;
+  }
+  .kv-val {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .big-number {
+    font-family: var(--mono);
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -1px;
+    line-height: 1;
+    padding: 12px 0 4px;
+  }
+  .big-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  /* Detection list */
+  .detection-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .detection-item:last-child { border-bottom: none; }
+  .det-class {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    min-width: 100px;
+  }
+  .conf-bar-wrap { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+  .conf-bar { height: 100%; border-radius: 2px; background: var(--accent); transition: width .4s; }
+  .conf-val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    min-width: 38px;
+    text-align: right;
+  }
+  .bbox-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1px 5px;
+  }
+
+  /* Severity badge */
+  .severity-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: var(--r);
+    margin: 12px 0 4px;
+  }
+  .sev-low  { background: #0a1a0a; color: var(--success); }
+  .sev-mid  { background: #1a1400; color: #ffcc00; }
+  .sev-high { background: #1a0a0a; color: var(--danger); }
+
+  /* Mechanic cards */
+  .mech-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .mech-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .mech-rank {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 28px;
+  }
+  .mech-rank.r1 { color: var(--accent); }
+  .mech-rank.r2 { color: #aaa; }
+  .mech-info { flex: 1; }
+  .mech-name {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .mech-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .mech-score {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* Message card */
+  .msg-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px;
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-top: 4px;
+  }
+  .msg-card[dir=rtl] { text-align: right; font-size: 15px; }
+
+  /* Sentiment */
+  .sentiment-result { margin-top: 4px; }
+  .sent-label {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 8px 0;
+  }
+  .sent-positive { color: var(--success); }
+  .sent-negative { color: var(--danger); }
+  .sent-neutral  { color: #ffcc00; }
+  .conf-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .conf-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; }
+  .conf-fill  { height: 100%; border-radius: 3px; transition: width .5s; }
+  .conf-pct   { font-family: var(--mono); font-size: 12px; color: var(--text-dim); min-width: 40px; }
+
+  /* Drag-drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--r);
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: #111a00;
+  }
+  .drop-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon { font-size: 28px; margin-bottom: 8px; }
+  .drop-text { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+  .drop-name { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-top: 4px; }
+
+  /* Alert */
+  .alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--r);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .alert-warn { background: #1a1200; border: 1px solid #3a2800; color: #ffaa00; }
+  .alert-ok   { background: #0a1a0a; border: 1px solid #1a3a1a; color: var(--success); }
+
+  /* Forecast */
+  .forecast-val {
+    font-family: var(--mono);
+    font-size: 48px;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+    padding: 10px 0 2px;
+  }
+
+  /* Run button row */
+  .run-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">AI</div>
+  <h1>Bodyshop AI &mdash; Model Dashboard</h1>
+  <span><span class="status-dot"></span>localhost:8000</span>
+</header>
+
+<nav id="nav">
+  <a href="#damage" class="active">Damage</a>
+  <a href="#time">Rep. Time</a>
+  <a href="#cost">Rep. Cost</a>
+  <a href="#mechanic">Mechanic</a>
+  <a href="#inventory">Inventory</a>
+  <a href="#message">Message</a>
+  <a href="#sentiment">Sentiment</a>
+</nav>
+
+<main>
+
+  <!-- 1. DAMAGE DETECTION -->
+  <section id="damage">
+    <div class="card">
+      <div class="card-header">
+        <span class="method">POST</span>
+        <span class="path">/predict-damage</span>
+        <span class="desc">YOLOv8 · damage detection</span>
+      </div>
+      <div class="card-body">
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="damageFile" accept="image/*" />
+          <div class="drop-icon">📷</div>
+          <div class="drop-text">Drop a car photo or click to browse</div>
+          <div class="drop-name" id="dropName"></div>
+        </div>
+        <div class="run-row">
+          <button class="btn btn-primary" onclick="runDamage()">Run Detection</button>
+          <div class="spinner" id="dmgSpinner"></div>
+        </div>
+        <div class="error-box" id="dmgError"></div>
+        <div class="result" id="dmgResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. REPAIR TIME -->
+  <section id="time">
+    <div class="card">
+      <div class="card-header">
+        <span class="method">POST</span>
+        <span class="path">/predict-time</span>
+        <span class="desc">XGBoost · hours estimate</span>
+      </div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div class="field">
+            <label>Vehicle Type</label>
+            <select id="t_vtype">
+              <option>sedan</option><option>suv</option><option>truck</option>
+              <option>hatchback</option><option>luxury</option><option>van</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Damage Type</label>
+            <select id="t_dtype">
+              <option>dent</option><option>scratch</option><option>crack</option>
+              <option>paint</option><option>multiple</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Severity</label>
+          <div class="slider-row">
+            <input type="range" min="0" max="1" step="0.01" value="0.5" id="t_sev"
+              oninput="document.getElementById('t_sev_v').textContent=parseFloat(this.value).toFixed(2)" />
+            <span class="slider-val" id="t_sev_v">0.50</span>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Parts Count</label>
+            <input type="number" id="t_parts" value="3" min="1" max="20" />
+          </div>
+          <div class="field">
+            <label>Mechanic Skill (1–5)</label>
+            <div class="slider-row">
+              <input type="range" min="1" max="5" step="1" value="3" id="t_skill"
+                oninput="document.getElementById('t_skill_v').textContent=this.value" />
+              <span class="slider-val" id="t_skill_v">3</span>
+            </div>
+          </div>
+        </div>
+        <div class="run-row">
+          <button class="btn btn-primary" onclick="runTime()">Predict Time</button>
+          <div class="spinner" id="timeSpinner"></div>
+        </div>
+        <div class="error-box" id="timeError"></div>
+        <div class="result" id="timeResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. REPAIR COST -->
+  <section id="cost">
+    <div class="card">
+      <div class="card-header">
+        <span class="method">POST</span>
+        <span class="path">/predict-cost</span>
+        <span class="desc">XGBoost · USD estimate</span>
+      </div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div class="field">
+            <label>Vehicle Type</label>
+            <select id="c_vtype">
+              <option>sedan</option><option>suv</option><option>truck</option>
+              <option>hatchback</option><option>luxury</option><option>van</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Damage Type</label>
+            <select id="c_dtype">
+              <option>dent</option><option>scratch</option><option>crack</option>
+              <option>paint</option><option>multiple</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Severity</label>
+          <div class="slider-row">
+            <input type="range" min="0" max="1" step="0.01" value="0.5" id="c_sev"
+              oninput="document.getElementById('c_sev_v').textContent=parseFloat(this.value).toFixed(2)" />
+            <span class="slider-val" id="c_sev_v">0.50</span>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Parts Count</label>
+            <input type="number" id="c_parts" value="3" min="1" max="20" />
+          </div>
+          <div class="field">
+            <label>Mechanic Skill (1–5)</label>
+            <div class="slider-row">
+              <input type="range" min="1" max="5" step="1" value="3" id="c_skill"
+                oninput="document.getElementById('c_skill_v').textContent=this.value" />
+              <span class="slider-val" id="c_skill_v">3</span>
+            </div>
+          </div>
+        </div>
+        <div class="run-row">
+          <button class="btn btn-primary" onclick="runCost()">Predict Cost</button>
+          <div class="spinner" id="costSpinner"></div>
+        </div>
+        <div class="error-box" id="costError"></div>
+        <div class="result" id="costResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. MECHANIC ASSIGNMENT -->
+  <section id="mechanic">
+    <div class="card">
+      <div class="card-header">
+        <span class="method">POST</span>
+        <span class="path">/assign-mechanic</span>
+        <span class="desc">XGBoost LambdaRank · top-3</span>
+      </div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div class="field">
+            <label>Job Type</label>
+            <select id="m_jtype">
+              <option>body_repair</option><option>paint</option><option>engine</option>
+              <option>electrical</option><option>glass</option><option>suspension</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Required Skill (1–5)</label>
+            <div class="slider-row">
+              <input type="range" min="1" max="5" step="1" value="3" id="m_skill"
+                oninput="document.getElementById('m_skill_v').textContent=this.value" />
+              <span class="slider-val" id="m_skill_v">3</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Estimated Hours</label>
+          <input type="number" id="m_hours" value="6" min="1" max="40" step="0.5" />
+        </div>
+        <div class="run-row">
+          <button class="btn btn-primary" onclick="runMechanic()">Assign Mechanic</button>
+          <div class="spinner" id="mechSpinner"></div>
+        </div>
+        <div class="error-box" id="mechError"></div>
+        <div class="result" id="mechResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. INVENTORY FORECAST -->
+  <section id="inventory">
+    <div class="card">
+      <div class="card-header">
+        <span class="method get">GET</span>
+        <span class="path">/forecast-inventory</span>
+        <span class="desc">Prophet · demand forecast</span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Part Category</label>
+          <select id="inv_cat">
+            <option>bumpers</option><option>headlights</option><option>body-panels</option>
+            <option>mirrors</option><option>windshields</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Forecast Horizon</label>
+          <div class="btn-group" id="daysGroup">
+            <button class="btn btn-sm active" onclick="setDays(this,30)">30 days</button>
+            <button class="btn btn-sm" onclick="setDays(this,60)">60 days</button>
+            <button class="btn btn-sm" onclick="setDays(this,90)">90 days</button>
+          </div>
+          <input type="hidden" id="inv_days" value="30" />
+        </div>
+        <div class="run-row">
+          <button class="btn btn-primary" onclick="runInventory()">Forecast</button>
+          <div class="spinner" id="invSpinner"></div>
+        </div>
+        <div class="error-box" id="invError"></div>
+        <div class="result" id="invResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. GENERATE MESSAGE -->
+  <section id="message">
+    <div class="card">
+      <div class="card-header">
+        <span class="method">POST</span>
+        <span class="path">/generate-message</span>
+        <span class="desc">LLaMA via Groq · bilingual</span>
+      </div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div class="field">
+            <label>Message Type</label>
+            <select id="msg_type">
+              <option value="status_update">Status Update</option>
+              <option value="delay">Delay Notice</option>
+              <option value="completion">Completion</option>
+              <option value="follow_up">Follow Up</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Language</label>
+            <div class="toggle-row">
+              <button class="toggle-btn active" id="lang_en" onclick="setLang('en')">English</button>
+              <button class="toggle-btn" id="lang_ar" onclick="setLang('ar')">العربية</button>
+            </div>
+            <input type="hidden" id="msg_lang" value="en" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Customer Name</label>
+          <input type="text" id="msg_name" placeholder="e.g. Ahmad Khalil" />
+        </div>
+        <div class="field">
+          <label>Job Details</label>
+          <textarea id="msg_details" placeholder="e.g. 2021 Toyota Camry, front bumper dent, estimated 3 days"></textarea>
+        </div>
+        <div class="run-row">
+          <button class="btn btn-primary" onclick="runMessage()">Generate Message</button>
+          <div class="spinner" id="msgSpinner"></div>
+        </div>
+        <div class="error-box" id="msgError"></div>
+        <div class="result" id="msgResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. SENTIMENT ANALYSIS -->
+  <section id="sentiment">
+    <div class="card">
+      <div class="card-header">
+        <span class="method">POST</span>
+        <span class="path">/analyze-sentiment</span>
+        <span class="desc">DistilBERT · review classifier</span>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Customer Review</label>
+          <textarea id="sent_text" rows="4" placeholder="e.g. The repair was done perfectly and on time. Great service!"></textarea>
+        </div>
+        <div class="run-row">
+          <button class="btn btn-primary" onclick="runSentiment()">Analyze</button>
+          <div class="spinner" id="sentSpinner"></div>
+        </div>
+        <div class="error-box" id="sentError"></div>
+        <div class="result" id="sentResult"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const API = 'http://localhost:8000';
+
+// ── helpers ──────────────────────────────────────────────
+function show(id, html)  { document.getElementById(id).innerHTML = html; document.getElementById(id).style.display = ''; }
+function hide(id)        { document.getElementById(id).style.display = 'none'; }
+function spin(id, on)    { document.getElementById(id).style.display = on ? 'block' : 'none'; }
+function err(id, msg)    { const el = document.getElementById(id); el.textContent = '⚠ ' + msg; el.style.display = 'block'; }
+function clearErr(id)    { hide(id); }
+
+async function post(path, body) {
+  const res = await fetch(API + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// ── drag-drop ─────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  document.getElementById('damageFile').files = e.dataTransfer.files;
+  document.getElementById('dropName').textContent = e.dataTransfer.files[0]?.name || '';
+});
+document.getElementById('damageFile').addEventListener('change', e => {
+  document.getElementById('dropName').textContent = e.target.files[0]?.name || '';
+});
+
+// ── 1. DAMAGE ─────────────────────────────────────────────
+async function runDamage() {
+  clearErr('dmgError'); show('dmgResult', '');
+  const file = document.getElementById('damageFile').files[0];
+  if (!file) { err('dmgError', 'Please select an image first.'); return; }
+  spin('dmgSpinner', true);
+  try {
+    const fd = new FormData();
+    fd.append('image', file);
+    const res = await fetch(API + '/predict-damage', { method: 'POST', body: fd });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const data = await res.json();
+    spin('dmgSpinner', false);
+
+    const sev = data.severity_score ?? 0;
+    const sevClass = sev < 0.35 ? 'sev-low' : sev < 0.65 ? 'sev-mid' : 'sev-high';
+    const sevLabel = sev < 0.35 ? 'LOW' : sev < 0.65 ? 'MODERATE' : 'HIGH';
+
+    let dets = '';
+    if (data.detections && data.detections.length) {
+      dets = data.detections.map(d => `
+        <div class="detection-item">
+          <span class="det-class">${d.class}</span>
+          <div class="conf-bar-wrap"><div class="conf-bar" style="width:${(d.confidence*100).toFixed(0)}%"></div></div>
+          <span class="conf-val">${(d.confidence*100).toFixed(1)}%</span>
+          <span class="bbox-tag">[${d.bbox.join(', ')}]</span>
+        </div>`).join('');
+    } else {
+      dets = '<p style="color:var(--text-dim);font-family:var(--mono);font-size:12px;padding:8px 0">No detections found.</p>';
+    }
+
+    show('dmgResult', `
+      <div class="divider"></div>
+      <div class="big-label">Severity Score</div>
+      <span class="severity-badge ${sevClass}">${sev.toFixed(3)} — ${sevLabel}</span>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-bottom:12px">
+        ${data.detection_count} detection${data.detection_count !== 1 ? 's' : ''}
+      </div>
+      ${dets}
+    `);
+  } catch(e) { spin('dmgSpinner', false); err('dmgError', e.message); }
+}
+
+// ── 2. REPAIR TIME ────────────────────────────────────────
+async function runTime() {
+  clearErr('timeError'); show('timeResult', '');
+  spin('timeSpinner', true);
+  try {
+    const data = await post('/predict-time', {
+      vehicle_type: document.getElementById('t_vtype').value,
+      damage_type:  document.getElementById('t_dtype').value,
+      severity:     parseFloat(document.getElementById('t_sev').value),
+      parts_count:  parseInt(document.getElementById('t_parts').value),
+      mechanic_skill: parseInt(document.getElementById('t_skill').value),
+    });
+    spin('timeSpinner', false);
+    show('timeResult', `
+      <div class="divider"></div>
+      <div class="big-label">Predicted Repair Time</div>
+      <div class="big-number">${data.predicted_hours}<span style="font-size:20px;color:var(--text-dim)"> hrs</span></div>
+    `);
+  } catch(e) { spin('timeSpinner', false); err('timeError', e.message); }
+}
+
+// ── 3. REPAIR COST ────────────────────────────────────────
+async function runCost() {
+  clearErr('costError'); show('costResult', '');
+  spin('costSpinner', true);
+  try {
+    const data = await post('/predict-cost', {
+      vehicle_type: document.getElementById('c_vtype').value,
+      damage_type:  document.getElementById('c_dtype').value,
+      severity:     parseFloat(document.getElementById('c_sev').value),
+      parts_count:  parseInt(document.getElementById('c_parts').value),
+      mechanic_skill: parseInt(document.getElementById('c_skill').value),
+    });
+    spin('costSpinner', false);
+    show('costResult', `
+      <div class="divider"></div>
+      <div class="big-label">Predicted Repair Cost</div>
+      <div class="big-number">$${data.predicted_cost_usd.toFixed(2)}</div>
+    `);
+  } catch(e) { spin('costSpinner', false); err('costError', e.message); }
+}
+
+// ── 4. MECHANIC ───────────────────────────────────────────
+async function runMechanic() {
+  clearErr('mechError'); show('mechResult', '');
+  spin('mechSpinner', true);
+  try {
+    const data = await post('/assign-mechanic', {
+      job_type:       document.getElementById('m_jtype').value,
+      required_skill: parseInt(document.getElementById('m_skill').value),
+      estimated_hours: parseFloat(document.getElementById('m_hours').value),
+    });
+    spin('mechSpinner', false);
+    const rankClasses = ['r1','r2','r3'];
+    const cards = data.ranked_mechanics.map((m, i) => `
+      <div class="mech-card">
+        <div class="mech-rank ${rankClasses[i]}">#${i+1}</div>
+        <div class="mech-info">
+          <div class="mech-name">${m.name}</div>
+          <div class="mech-meta">${m.specialty} · skill ${m.skill_level}/5 · workload ${(m.workload*100).toFixed(0)}%</div>
+        </div>
+        <div class="mech-score">${m.score.toFixed(3)}</div>
+      </div>`).join('');
+    show('mechResult', `<div class="divider"></div><div class="mech-cards">${cards}</div>`);
+  } catch(e) { spin('mechSpinner', false); err('mechError', e.message); }
+}
+
+// ── 5. INVENTORY ──────────────────────────────────────────
+function setDays(btn, val) {
+  document.querySelectorAll('#daysGroup .btn-sm').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('inv_days').value = val;
+}
+
+async function runInventory() {
+  clearErr('invError'); show('invResult', '');
+  spin('invSpinner', true);
+  try {
+    const cat  = document.getElementById('inv_cat').value;
+    const days = document.getElementById('inv_days').value;
+    const res  = await fetch(`${API}/forecast-inventory?part_category=${encodeURIComponent(cat)}&days=${days}`);
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const data = await res.json();
+    spin('invSpinner', false);
+    const alert = data.low_stock_alert
+      ? `<div class="alert alert-warn">⚠ Low stock alert — reorder ${cat} soon</div>`
+      : `<div class="alert alert-ok">✓ Stock levels look healthy</div>`;
+    show('invResult', `
+      <div class="divider"></div>
+      <div class="big-label">Forecast · ${data.days} days · ${data.part_category}</div>
+      <div class="forecast-val">${data.forecast_units}<span style="font-size:20px;color:var(--text-dim)"> units</span></div>
+      ${alert}
+    `);
+  } catch(e) { spin('invSpinner', false); err('invError', e.message); }
+}
+
+// ── 6. MESSAGE ────────────────────────────────────────────
+function setLang(lang) {
+  document.getElementById('msg_lang').value = lang;
+  document.getElementById('lang_en').classList.toggle('active', lang === 'en');
+  document.getElementById('lang_ar').classList.toggle('active', lang === 'ar');
+}
+
+async function runMessage() {
+  clearErr('msgError'); show('msgResult', '');
+  spin('msgSpinner', true);
+  try {
+    const lang = document.getElementById('msg_lang').value;
+    const data = await post('/generate-message', {
+      message_type:  document.getElementById('msg_type').value,
+      customer_name: document.getElementById('msg_name').value || 'Customer',
+      job_details:   document.getElementById('msg_details').value,
+      language:      lang,
+    });
+    spin('msgSpinner', false);
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    show('msgResult', `
+      <div class="divider"></div>
+      <div class="msg-card" dir="${dir}">${data.message}</div>
+    `);
+  } catch(e) { spin('msgSpinner', false); err('msgError', e.message); }
+}
+
+// ── 7. SENTIMENT ──────────────────────────────────────────
+async function runSentiment() {
+  clearErr('sentError'); show('sentResult', '');
+  spin('sentSpinner', true);
+  try {
+    const data = await post('/analyze-sentiment', {
+      text: document.getElementById('sent_text').value,
+    });
+    spin('sentSpinner', false);
+    const s   = data.sentiment?.toLowerCase() || 'neutral';
+    const cls = s === 'positive' ? 'sent-positive' : s === 'negative' ? 'sent-negative' : 'sent-neutral';
+    const pct = ((data.confidence ?? 0) * 100).toFixed(1);
+    const barColor = s === 'positive' ? 'var(--success)' : s === 'negative' ? 'var(--danger)' : '#ffcc00';
+    show('sentResult', `
+      <div class="divider"></div>
+      <div class="sentiment-result">
+        <div class="sent-label ${cls}">${data.sentiment}</div>
+        <div class="conf-row">
+          <div class="conf-track"><div class="conf-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          <span class="conf-pct">${pct}%</span>
+        </div>
+      </div>
+    `);
+  } catch(e) { spin('sentSpinner', false); err('sentError', e.message); }
+}
+
+// ── Nav active on scroll ──────────────────────────────────
+const sections = document.querySelectorAll('main section');
+const navLinks  = document.querySelectorAll('nav a');
+const observer  = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+    }
+  });
+}, { threshold: 0.4 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

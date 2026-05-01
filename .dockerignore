@@ -1,0 +1,13 @@
+venv/
+.env
+__pycache__/
+*.pyc
+data/*.csv
+!data/mechanics.csv
+notebooks/
+scripts/
+tests/
+ui/
+images/
+*.md
+.git/
