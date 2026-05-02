@@ -18,6 +18,7 @@ from PIL import Image
 from ultralytics import YOLO
 from dotenv import load_dotenv
 from groq import Groq
+from transformers import pipeline as hf_pipeline
 import psycopg2
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -147,6 +148,19 @@ LOW_STOCK_THRESHOLD = {"bumpers": 50, "headlights": 35, "body-panels": 70, "mirr
 DB_URL = os.getenv("DATABASE_URL", "")
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+# DistilBERT sentiment model (fine-tuned on amazon_polarity, pushed to HF Hub)
+HF_SENTIMENT_MODEL = "GhandourGh/bodyshop-sentiment"
+try:
+    sentiment_classifier = hf_pipeline(
+        "text-classification",
+        model=HF_SENTIMENT_MODEL,
+        token=os.getenv("HF_TOKEN", ""),
+    )
+    logger.info("DistilBERT sentiment model loaded from HF Hub")
+except Exception as e:
+    sentiment_classifier = None
+    logger.warning(f"Could not load DistilBERT model, falling back to Groq: {e}")
 
 
 PROMPTS = {
@@ -431,7 +445,17 @@ class ReviewInput(BaseModel):
 
 @app.post("/analyze-sentiment")
 def analyze_sentiment(review: ReviewInput):
-    """Analyze sentiment of a customer review via LLaMA."""
+    """Analyze sentiment using fine-tuned DistilBERT (GhandourGh/bodyshop-sentiment)."""
+    if sentiment_classifier is not None:
+        result = sentiment_classifier(review.text[:512])[0]
+        label = result["label"].lower()       # "positive" or "negative"
+        score = round(float(result["score"]), 4)
+        # Map to 3-class: low-confidence negative → neutral
+        if label == "negative" and score < 0.65:
+            label = "neutral"
+        return {"sentiment": label, "confidence": score, "model": "distilbert"}
+
+    # Fallback: Groq LLaMA if DistilBERT failed to load
     prompt = (
         f"Classify the sentiment of this customer review as exactly one word: positive, negative, or neutral.\n"
         f"Then on a new line give a confidence score between 0.0 and 1.0.\n"
@@ -455,4 +479,4 @@ def analyze_sentiment(review: ReviewInput):
                 confidence = float(line.split(":", 1)[1].strip())
             except ValueError:
                 pass
-    return {"sentiment": sentiment, "confidence": round(confidence, 4)}
+    return {"sentiment": sentiment, "confidence": round(confidence, 4), "model": "groq-fallback"}
