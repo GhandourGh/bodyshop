@@ -5,22 +5,104 @@ Owner: Dowr (AI Engineer)
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import joblib
 import pandas as pd
+import numpy as np
 import os
 import io
+import logging
+from datetime import datetime
 from PIL import Image
 from ultralytics import YOLO
 from dotenv import load_dotenv
 from groq import Groq
+import psycopg2
+from apscheduler.schedulers.background import BackgroundScheduler
 
 load_dotenv()
+
+logger = logging.getLogger("inventory_retrain")
+
+# ── Auto-retrain Prophet models from real DB data ────────────────────────────
+def retrain_prophet_models():
+    """Pull fresh parts_usage data from Neon and retrain all Prophet models."""
+    db_url = os.getenv("DATABASE_URL", "")
+    if not db_url:
+        logger.warning("DATABASE_URL not set — skipping retrain")
+        return
+
+    try:
+        from prophet import Prophet
+        import warnings
+        warnings.filterwarnings("ignore")
+
+        conn = psycopg2.connect(db_url)
+        cur  = conn.cursor()
+
+        retrained = 0
+        for cat in PROPHET_CATEGORIES:
+            cur.execute("""
+                SELECT used_on, SUM(quantity) AS total
+                FROM parts_usage
+                WHERE category = %s
+                GROUP BY used_on
+                ORDER BY used_on
+            """, (cat,))
+            rows = cur.fetchall()
+
+            if len(rows) < 14:
+                logger.info("Not enough data for %s (%d rows) — skipping", cat, len(rows))
+                continue
+
+            df = pd.DataFrame(rows, columns=["ds", "y"])
+            df["ds"] = pd.to_datetime(df["ds"])
+            df["y"]  = df["y"].astype(float)
+
+            model = Prophet(
+                yearly_seasonality=False,
+                weekly_seasonality=True,
+                daily_seasonality=False,
+                seasonality_mode="multiplicative",
+                changepoint_prior_scale=0.05,
+            )
+            model.fit(df)
+
+            # Hot-swap in memory + persist to disk
+            prophet_models[cat] = model
+            joblib.dump(model, os.path.join(MODEL_DIR, f"prophet_{cat}.pkl"))
+            retrained += 1
+            logger.info("Retrained prophet_%s on %d days of data", cat, len(df))
+
+        cur.close()
+        conn.close()
+        logger.info("Retrain complete at %s — %d/%d models updated",
+                    datetime.now().strftime("%Y-%m-%d %H:%M"), retrained, len(PROPHET_CATEGORIES))
+
+    except Exception as e:
+        logger.error("Retrain failed: %s", e)
+
+
+scheduler = BackgroundScheduler()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Run once at startup so models are fresh immediately
+    retrain_prophet_models()
+    # Then retrain every night at 02:00
+    scheduler.add_job(retrain_prophet_models, "cron", hour=2, minute=0, id="nightly_retrain")
+    scheduler.start()
+    logger.info("Nightly Prophet retrain scheduled at 02:00")
+    yield
+    scheduler.shutdown(wait=False)
+
 
 app = FastAPI(
     title="Bodyshop AI Service",
     description="7 ML endpoints powering the Car Bodyshop Management System",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -62,6 +144,7 @@ prophet_models = {
     for cat in PROPHET_CATEGORIES
 }
 LOW_STOCK_THRESHOLD = {"bumpers": 50, "headlights": 35, "body-panels": 70, "mirrors": 25, "windshields": 18}
+DB_URL = os.getenv("DATABASE_URL", "")
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -96,7 +179,21 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    next_run = None
+    job = scheduler.get_job("nightly_retrain")
+    if job and job.next_run_time:
+        next_run = job.next_run_time.strftime("%Y-%m-%d %H:%M:%S")
+    return {"status": "healthy", "next_retrain": next_run}
+
+
+@app.post("/retrain-inventory")
+def trigger_retrain():
+    """Manually trigger a Prophet retrain from the latest DB data."""
+    try:
+        retrain_prophet_models()
+        return {"status": "ok", "message": "Prophet models retrained from latest DB data"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================
@@ -109,7 +206,12 @@ async def predict_damage(image: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     contents = await image.read()
-    img = Image.open(io.BytesIO(contents)).convert("RGB")
+    if not contents:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+    try:
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Cannot read image — unsupported format or corrupted file")
 
     results = yolo_model(img, verbose=False)[0]
 
@@ -247,7 +349,7 @@ def assign_mechanic(job: JobContext):
 # ============================================================
 @app.get("/forecast-inventory")
 def forecast_inventory(part_category: str, days: int = 30):
-    """Forecast part demand for the next N days."""
+    """Forecast part demand for the next N days using models trained on real DB data."""
     if part_category not in prophet_models:
         raise HTTPException(status_code=400, detail=f"Unknown category. Choose from: {PROPHET_CATEGORIES}")
 
@@ -255,15 +357,38 @@ def forecast_inventory(part_category: str, days: int = 30):
     future = model.make_future_dataframe(periods=days, freq="D")
     forecast = model.predict(future)
     total = int(forecast.tail(days)["yhat"].clip(lower=0).sum().round())
-    low_stock = total > LOW_STOCK_THRESHOLD[part_category] * days / 30
 
-    return {
+    # Pull real current stock from Neon DB
+    current_stock = None
+    try:
+        conn = psycopg2.connect(DB_URL)
+        cur  = conn.cursor()
+        cur.execute("SELECT SUM(stock) FROM parts WHERE category = %s", (part_category,))
+        row = cur.fetchone()
+        current_stock = int(row[0]) if row and row[0] is not None else None
+        cur.close()
+        conn.close()
+    except Exception:
+        pass  # DB unavailable — fall back to threshold only
+
+    # Low-stock: forecast demand exceeds current stock, or exceeds historical threshold
+    threshold = LOW_STOCK_THRESHOLD[part_category] * days / 30
+    if current_stock is not None:
+        low_stock = total > current_stock
+    else:
+        low_stock = total > threshold
+
+    response = {
         "part_category": part_category,
         "days": days,
         "forecast_units": total,
         "daily_avg": round(total / days, 1),
         "low_stock_alert": low_stock,
     }
+    if current_stock is not None:
+        response["current_stock"] = current_stock
+
+    return response
 
 
 # ============================================================

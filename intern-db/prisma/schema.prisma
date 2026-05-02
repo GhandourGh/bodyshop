@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ai_predictions {
+  id         String    @id @db.Uuid
+  job_id     String?   @db.Uuid
+  type       String?
+  result     Json?
+  confidence Float?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  jobs       jobs?     @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model audit_logs {
+  id         String    @id @db.Uuid
+  user_id    String?   @db.Uuid
+  action     String?
+  entity     String?
+  entity_id  String?   @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model customers {
+  id       String     @id @db.Uuid
+  user_id  String?    @db.Uuid
+  phone    String?
+  users    users?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  jobs     jobs[]
+  vehicles vehicles[]
+}
+
+model damage_reports {
+  id         String    @id @db.Uuid
+  job_id     String?   @db.Uuid
+  image_url  String?
+  severity   Int?
+  notes      String?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  jobs       jobs?     @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model job_parts {
+  id       String  @id @db.Uuid
+  job_id   String? @db.Uuid
+  part_id  String? @db.Uuid
+  quantity Int?
+  jobs     jobs?   @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parts    parts?  @relation(fields: [part_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model jobs {
+  id                   String           @id @db.Uuid
+  vehicle_id           String?          @db.Uuid
+  customer_id          String?          @db.Uuid
+  status               String?          @default("pending")
+  estimated_cost       Decimal?         @db.Decimal
+  estimated_time       Int?
+  assigned_mechanic_id String?          @db.Uuid
+  created_at           DateTime?        @default(now()) @db.Timestamp(6)
+  ai_predictions       ai_predictions[]
+  damage_reports       damage_reports[]
+  job_parts            job_parts[]
+  customers            customers?       @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vehicles             vehicles?        @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  messages             messages[]
+}
+
+model mechanics {
+  id          String  @id @db.Uuid
+  user_id     String? @db.Uuid
+  skill_level Int?    @default(1)
+  workload    Int?    @default(0)
+  users       users?  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model messages {
+  id         String    @id @db.Uuid
+  job_id     String?   @db.Uuid
+  user_id    String?   @db.Uuid
+  channel    String?
+  content    String?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  jobs       jobs?     @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model parts {
+  id        String      @id @db.Uuid
+  name      String?
+  stock     Int?        @default(0)
+  price     Decimal?    @db.Decimal
+  job_parts job_parts[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id            String      @id @db.Uuid
+  name          String
+  email         String      @unique
+  password_hash String
+  role          String
+  created_at    DateTime?   @default(now()) @db.Timestamp(6)
+  customers     customers[]
+  mechanics     mechanics[]
+  messages      messages[]
+}
+
+model vehicles {
+  id          String     @id @db.Uuid
+  customer_id String?    @db.Uuid
+  make        String?
+  model       String?
+  year        Int?
+  vin         String?    @unique
+  jobs        jobs[]
+  customers   customers? @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
