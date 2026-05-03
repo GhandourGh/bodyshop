@@ -1,5 +1,23 @@
-// Audit Service — called from within other services ONLY (never from controllers or routes)
-// Automatically logs job creation, status changes, mechanic assignments
-// TODO: implement in audit step
+import { createAuditLog, getAuditLogs } from '@/repositories/auditRepository';
 
-export const logAudit = async ({ jobId, action, actorId, details }) => {};
+// Never throws — audit must never crash a parent request
+export const logAudit = async ({ userId, action, entity, entityId } = {}) => {
+  try {
+    await createAuditLog({ userId, action, entity, entityId });
+  } catch {
+    // silently swallow — audit is fire-and-forget
+  }
+};
+
+export const listAuditLogs = async (opts) => {
+  const rows = await getAuditLogs(opts);
+  return rows.map(r => ({
+    id: r.id,
+    timestamp: r.created_at,
+    actor: r.users?.name || 'System',
+    actorRole: r.users?.role || null,
+    action: r.action || 'ACTION',
+    entity: r.entity || '—',
+    entityId: r.entity_id,
+  }));
+};

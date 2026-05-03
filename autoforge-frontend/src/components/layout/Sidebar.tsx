@@ -3,7 +3,8 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Briefcase, Users, Car,
   Wrench, Package, Bot, MessageSquare, Settings, LogOut,
-  DollarSign, Shield, Zap, Sparkles,
+  DollarSign, Shield, Zap, Sparkles, ClipboardList, BookOpen, KeyRound,
+  BarChart2, Brain, HardDrive,
 } from 'lucide-react'
 import logo from '@/assets/logo.svg'
 
@@ -14,6 +15,7 @@ const navGroups = [
       { icon: LayoutDashboard, label: 'Dashboard',   to: '/admin/dashboard' },
       { icon: Briefcase,       label: 'Jobs',        to: '/admin/jobs' },
       { icon: Users,           label: 'Customers',   to: '/admin/customers' },
+      { icon: ClipboardList,   label: 'Quote requests', to: '/admin/quote-requests' },
       { icon: Car,             label: 'Vehicles',    to: '/admin/vehicles' },
       { icon: Wrench,          label: 'Mechanics',   to: '/admin/mechanics' },
       { icon: Package,         label: 'Inventory',   to: '/admin/inventory' },
@@ -23,22 +25,38 @@ const navGroups = [
     label: 'Intelligence',
     items: [
       { icon: Sparkles,        label: 'AI Job Wizard', to: '/admin/ai-job' },
-      { icon: Bot,             label: 'AI Lab',      to: '/admin/ai' },
-      { icon: MessageSquare,   label: 'Messages',    to: '/admin/messages' },
+      { icon: Bot,             label: 'AI Lab',       to: '/admin/ai' },
+      { icon: Brain,           label: 'AI Feedback',  to: '/admin/ai-feedback' },
+      { icon: MessageSquare,   label: 'Messages',     to: '/admin/messages' },
+      { icon: BookOpen,        label: 'Damage guide', to: '/admin/damage-guide' },
     ],
   },
   {
     label: 'Finance & System',
     items: [
-      { icon: DollarSign,      label: 'Finance',     to: '/admin/finance' },
-      { icon: Zap,             label: 'Integrations',to: '/admin/integrations' },
-      { icon: Shield,          label: 'Audit Log',   to: '/admin/audit' },
+      { icon: KeyRound,        label: 'Vault & logs', to: '/admin/vault' },
+      { icon: DollarSign,      label: 'Finance',      to: '/admin/finance' },
+      { icon: BarChart2,       label: 'Analytics',    to: '/admin/analytics' },
+      { icon: Zap,             label: 'Integrations', to: '/admin/integrations' },
+      { icon: Shield,          label: 'Audit Log',    to: '/admin/audit' },
+      { icon: HardDrive,       label: 'Backup',       to: '/admin/backup' },
     ],
   },
 ]
 
+function isAdminRole(): boolean {
+  try {
+    const raw = localStorage.getItem('af_user')
+    if (!raw) return false
+    return (JSON.parse(raw) as { role?: string }).role?.toLowerCase() === 'admin'
+  } catch {
+    return false
+  }
+}
+
 export default function Sidebar() {
   const location = useLocation()
+  const admin = isAdminRole()
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[220px] bg-forge-card border-r border-forge-border/50 flex flex-col z-40">
@@ -60,7 +78,7 @@ export default function Sidebar() {
               {group.label}
             </p>
             <div className="space-y-0.5">
-              {group.items.map(({ icon: Icon, label, to }) => {
+              {group.items.filter(({ to }) => to !== '/admin/vault' || admin).map(({ icon: Icon, label, to }) => {
                 const active = location.pathname === to
                 return (
                   <Link

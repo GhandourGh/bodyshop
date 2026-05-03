@@ -12,11 +12,12 @@ import AdminLayout from '@/components/layout/AdminLayout'
 import { useToast } from '@/components/shared/Toast'
 import { predictDamage, predictTime, predictCost, assignMechanic, generateMessage } from '@/api'
 import { backendClient } from '@/api/client'
-import type { Detection } from '@/types'
+import type { Detection, RepairFeatures } from '@/types'
+import { getGuide } from '@/lib/damageGuide'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function damageClassToType(classes: string[]): string {
+function damageClassToType(classes: string[]): RepairFeatures['damage_type'] {
   if (classes.length === 0) return 'dent'
   const counts: Record<string, number> = {}
   for (const c of classes) {
@@ -28,7 +29,7 @@ function damageClassToType(classes: string[]): string {
   }
   const uniqueTypes = Object.keys(counts)
   if (uniqueTypes.length > 2) return 'multiple'
-  return uniqueTypes.sort((a, b) => counts[b] - counts[a])[0]
+  return (uniqueTypes.sort((a, b) => counts[b] - counts[a])[0] || 'dent') as RepairFeatures['damage_type']
 }
 
 function damageTypeToJobType(dt: string): string {
@@ -629,6 +630,48 @@ export default function AIJob() {
                   </div>
                 )}
               </div>
+
+              {/* Suggested Parts & Actions */}
+              {(() => {
+                const guide = getGuide(results.damageType)
+                if (!guide) return null
+                return (
+                  <div className="glass rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🔩</span>
+                      <h3 className="font-display font-semibold text-lg">Suggested Parts & Actions</h3>
+                      <span className="ml-auto text-xs font-mono text-forge-muted px-2 py-1 glass rounded-lg border border-forge-border/40">{guide.label}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <p className="text-xs font-mono text-forge-muted uppercase tracking-wider mb-2">Required Parts</p>
+                        <ul className="space-y-2">
+                          {guide.parts.map((part, i) => (
+                            <li key={i} className="flex items-start gap-2.5 text-sm">
+                              <CheckCircle size={13} className="text-forge-blue mt-0.5 flex-shrink-0" />
+                              <span>
+                                <span className="text-forge-text font-medium">{part.name}</span>
+                                {part.note && <span className="text-forge-muted ml-1.5 text-xs">— {part.note}</span>}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="text-xs font-mono text-forge-muted uppercase tracking-wider mb-2">Labor Actions</p>
+                        <ol className="space-y-2">
+                          {guide.actions.map((action, i) => (
+                            <li key={i} className="flex items-start gap-2.5 text-sm">
+                              <span className="w-5 h-5 rounded-full bg-forge-orange/15 border border-forge-orange/30 flex items-center justify-center text-xs font-bold text-forge-orange flex-shrink-0 mt-0.5">{i + 1}</span>
+                              <span className="text-forge-muted">{action}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* Time & Cost */}
               <div className="grid grid-cols-2 gap-4">
