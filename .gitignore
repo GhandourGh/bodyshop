@@ -11,6 +11,11 @@ env/
 
 # Environment variables (NEVER commit real keys)
 .env
+.env.local
+intern-db/.env
+intern-db/.env.local
+autoforge-frontend/.env
+autoforge-frontend/.env.local
 
 # IDE
 .vscode/

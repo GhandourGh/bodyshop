@@ -129,23 +129,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Demo hint */}
-          <div className="mt-6 pt-5 border-t border-forge-border/30">
-            <p className="text-xs text-forge-muted text-center mb-3 font-mono">DEMO CREDENTIALS</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: 'Email', value: 'admin@autoforge.com' },
-                { label: 'Password', value: 'password123' },
-              ].map(({ label, value }) => (
-                <button key={label} type="button"
-                  onClick={() => label === 'Email' ? setEmail(value) : setPassword(value)}
-                  className="glass rounded-lg px-3 py-2 text-left hover:border-forge-blue/30 border border-forge-border/30 transition-colors">
-                  <p className="text-[10px] font-mono text-forge-muted uppercase">{label}</p>
-                  <p className="text-xs font-mono text-forge-text mt-0.5">{value}</p>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <p className="text-center text-xs text-forge-muted mt-6">

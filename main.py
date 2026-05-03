@@ -3,8 +3,12 @@ Bodyshop AI Microservice
 Owner: Dowr (AI Engineer)
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Security, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security.api_key import APIKeyHeader
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import joblib
@@ -25,6 +29,19 @@ from apscheduler.schedulers.background import BackgroundScheduler
 load_dotenv()
 
 logger = logging.getLogger("inventory_retrain")
+
+# ── Rate limiter ─────────────────────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+
+# ── API Key auth ─────────────────────────────────────────────────────────────
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+async def verify_api_key(key: str = Security(_api_key_header)):
+    expected = os.getenv("AI_API_KEY", "")
+    if not expected:
+        return  # no key configured → open (dev mode)
+    if key != expected:
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
 
 # ── Auto-retrain Prophet models from real DB data ────────────────────────────
 def retrain_prophet_models():
@@ -102,16 +119,23 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Bodyshop AI Service",
     description="7 ML endpoints powering the Car Bodyshop Management System",
-    version="0.1.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:4173"
+).split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 # ============================================================
@@ -200,7 +224,7 @@ def health():
     return {"status": "healthy", "next_retrain": next_run}
 
 
-@app.post("/retrain-inventory")
+@app.post("/retrain-inventory", dependencies=[Depends(verify_api_key)])
 def trigger_retrain():
     """Manually trigger a Prophet retrain from the latest DB data."""
     try:
@@ -213,8 +237,9 @@ def trigger_retrain():
 # ============================================================
 # 1. Damage Detection (YOLOv8) — TASK D
 # ============================================================
-@app.post("/predict-damage")
-async def predict_damage(image: UploadFile = File(...)):
+@app.post("/predict-damage", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+async def predict_damage(request: Request, image: UploadFile = File(...)):
     """Upload a car photo, get detected damage boxes + classes + severity score."""
     if not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -270,7 +295,7 @@ class RepairFeatures(BaseModel):
     mechanic_skill: int
 
 
-@app.post("/predict-time")
+@app.post("/predict-time", dependencies=[Depends(verify_api_key)])
 def predict_time(features: RepairFeatures):
     """Predict repair time in hours."""
     row = {"severity": features.severity,
@@ -290,7 +315,7 @@ def predict_time(features: RepairFeatures):
 # ============================================================
 # 3. Repair Cost Prediction (XGBoost)
 # ============================================================
-@app.post("/predict-cost")
+@app.post("/predict-cost", dependencies=[Depends(verify_api_key)])
 def predict_cost(features: RepairFeatures):
     """Predict repair cost in USD."""
     row = {"severity": features.severity,
@@ -316,7 +341,7 @@ class JobContext(BaseModel):
     estimated_hours: float
 
 
-@app.post("/assign-mechanic")
+@app.post("/assign-mechanic", dependencies=[Depends(verify_api_key)])
 def assign_mechanic(job: JobContext):
     """Return top-3 ranked mechanics for the job."""
     rows = []
@@ -361,7 +386,7 @@ def assign_mechanic(job: JobContext):
 # ============================================================
 # 5. Inventory Forecast (Prophet) — TASK E
 # ============================================================
-@app.get("/forecast-inventory")
+@app.get("/forecast-inventory", dependencies=[Depends(verify_api_key)])
 def forecast_inventory(part_category: str, days: int = 30):
     """Forecast part demand for the next N days using models trained on real DB data."""
     if part_category not in prophet_models:
@@ -415,8 +440,9 @@ class MessageContext(BaseModel):
     language: str = "en"  # "en" or "ar"
 
 
-@app.post("/generate-message")
-def generate_message(ctx: MessageContext):
+@app.post("/generate-message", dependencies=[Depends(verify_api_key)])
+@limiter.limit("20/minute")
+def generate_message(request: Request, ctx: MessageContext):
     """Generate a customer message via Groq LLaMA."""
     lang = ctx.language if ctx.language in ("en", "ar") else "en"
     msg_type = ctx.message_type if ctx.message_type in PROMPTS else "status_update"
@@ -443,8 +469,9 @@ class ReviewInput(BaseModel):
     text: str
 
 
-@app.post("/analyze-sentiment")
-def analyze_sentiment(review: ReviewInput):
+@app.post("/analyze-sentiment", dependencies=[Depends(verify_api_key)])
+@limiter.limit("30/minute")
+def analyze_sentiment(request: Request, review: ReviewInput):
     """Analyze sentiment using fine-tuned DistilBERT (GhandourGh/bodyshop-sentiment)."""
     if sentiment_classifier is not None:
         result = sentiment_classifier(review.text[:512])[0]

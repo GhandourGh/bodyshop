@@ -18,6 +18,18 @@ import AuditLog from '@/pages/admin/AuditLog'
 import Integrations from '@/pages/admin/Integrations'
 import PageTransition from '@/components/shared/PageTransition'
 import { ToastProvider } from '@/components/shared/Toast'
+import PrivateRoute from '@/components/PrivateRoute'
+import ErrorBoundary from '@/components/ErrorBoundary'
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <PrivateRoute>
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
+    </PrivateRoute>
+  )
+}
 
 function AppRoutes() {
   const location = useLocation()
@@ -25,23 +37,27 @@ function AppRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        {/* Public routes */}
         <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/ai-demo" element={<PageTransition><AiDemo /></PageTransition>} />
-        <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/jobs" element={<Jobs />} />
-        <Route path="/admin/customers" element={<Customers />} />
-        <Route path="/admin/vehicles" element={<Vehicles />} />
-        <Route path="/admin/mechanics" element={<Mechanics />} />
-        <Route path="/admin/inventory" element={<Inventory />} />
-        <Route path="/admin/ai" element={<AILab />} />
-        <Route path="/admin/messages" element={<Messages />} />
-        <Route path="/admin/settings" element={<Settings />} />
-        <Route path="/admin/finance" element={<Finance />} />
-        <Route path="/admin/audit" element={<AuditLog />} />
-        <Route path="/admin/integrations" element={<Integrations />} />
+
+        {/* Protected admin routes */}
+        <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
+        <Route path="/admin/jobs" element={<AdminRoute><Jobs /></AdminRoute>} />
+        <Route path="/admin/customers" element={<AdminRoute><Customers /></AdminRoute>} />
+        <Route path="/admin/vehicles" element={<AdminRoute><Vehicles /></AdminRoute>} />
+        <Route path="/admin/mechanics" element={<AdminRoute><Mechanics /></AdminRoute>} />
+        <Route path="/admin/inventory" element={<AdminRoute><Inventory /></AdminRoute>} />
+        <Route path="/admin/ai" element={<AdminRoute><AILab /></AdminRoute>} />
+        <Route path="/admin/messages" element={<AdminRoute><Messages /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />
+        <Route path="/admin/finance" element={<AdminRoute><Finance /></AdminRoute>} />
+        <Route path="/admin/audit" element={<AdminRoute><AuditLog /></AdminRoute>} />
+        <Route path="/admin/integrations" element={<AdminRoute><Integrations /></AdminRoute>} />
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
