@@ -366,7 +366,15 @@ def assign_mechanic(job: JobContext):
     scores = ranker.predict(df)
     mechanics_df_copy = mechanics_df.copy()
     mechanics_df_copy["score"] = scores
-    top3 = mechanics_df_copy.nlargest(3, "score")
+    top3 = mechanics_df_copy.nlargest(3, "score").copy()
+
+    # Normalize scores to [0, 1] across ALL mechanics so "score" means
+    # relative fit quality (best possible for this job = 1.0, worst = 0.0)
+    s_min, s_max = float(scores.min()), float(scores.max())
+    if s_max > s_min:
+        top3["score_norm"] = (top3["score"] - s_min) / (s_max - s_min)
+    else:
+        top3["score_norm"] = 1.0
 
     return {
         "ranked_mechanics": [
@@ -375,8 +383,8 @@ def assign_mechanic(job: JobContext):
                 "name": row["name"],
                 "specialty": row["specialty"],
                 "skill_level": int(row["skill_level"]),
-                "workload": float(row["workload"]),
-                "score": round(float(row["score"]), 4),
+                "workload": round(float(row["workload"]) * 100, 1),  # return as 0-100
+                "score": round(float(row["score_norm"]), 4),          # normalized 0-1
             }
             for _, row in top3.iterrows()
         ]

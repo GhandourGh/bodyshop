@@ -339,12 +339,13 @@ function MechanicAssignment() {
                 <div className="text-right">
                   <div className="text-sm font-mono text-forge-muted mb-1">Workload</div>
                   <div className="w-24 h-1.5 bg-forge-border rounded-full overflow-hidden">
-                    <div className="h-full bg-forge-orange rounded-full" style={{ width: `${m.workload * 100}%` }} />
+                    <div className="h-full bg-forge-orange rounded-full" style={{ width: `${m.workload}%` }} />
                   </div>
+                  <div className="text-xs font-mono text-forge-muted mt-1">{m.workload.toFixed(0)}%</div>
                 </div>
                 <div className="text-right w-16">
-                  <div className="text-xs font-mono text-forge-muted">Score</div>
-                  <div className="font-mono font-bold text-forge-blue-light">{m.score.toFixed(2)}</div>
+                  <div className="text-xs font-mono text-forge-muted">Match</div>
+                  <div className="font-mono font-bold text-forge-blue-light">{(m.score * 100).toFixed(0)}%</div>
                 </div>
               </motion.div>
             ))}
