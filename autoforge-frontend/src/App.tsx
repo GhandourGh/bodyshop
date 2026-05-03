@@ -11,6 +11,7 @@ import Vehicles from '@/pages/admin/Vehicles'
 import Mechanics from '@/pages/admin/Mechanics'
 import Inventory from '@/pages/admin/Inventory'
 import AILab from '@/pages/admin/AILab'
+import AIJob from '@/pages/admin/AIJob'
 import Messages from '@/pages/admin/Messages'
 import Settings from '@/pages/admin/Settings'
 import Finance from '@/pages/admin/Finance'
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="/admin/vehicles" element={<AdminRoute><Vehicles /></AdminRoute>} />
         <Route path="/admin/mechanics" element={<AdminRoute><Mechanics /></AdminRoute>} />
         <Route path="/admin/inventory" element={<AdminRoute><Inventory /></AdminRoute>} />
+        <Route path="/admin/ai-job" element={<AdminRoute><AIJob /></AdminRoute>} />
         <Route path="/admin/ai" element={<AdminRoute><AILab /></AdminRoute>} />
         <Route path="/admin/messages" element={<AdminRoute><Messages /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><Settings /></AdminRoute>} />

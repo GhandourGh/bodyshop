@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Briefcase, Car, User, Wrench, DollarSign, Clock, Bot, ChevronRight, CheckCircle, PenLine, Download, Plus } from 'lucide-react'
@@ -20,6 +21,7 @@ const blankForm: JobForm = { vehicle: '', vehicleType: 'sedan', customer: '', da
 
 export default function Jobs() {
   const { toast } = useToast()
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const [activeTab, setActiveTab] = useState('All')
   const [selected, setSelected]   = useState<any>(null)
@@ -71,7 +73,7 @@ export default function Jobs() {
               className="flex items-center gap-2 px-4 py-2.5 glass border border-forge-border hover:border-forge-blue/40 text-sm font-medium rounded-xl transition-all">
               <Download size={14} className="text-forge-blue" /> Export
             </button>
-            <button onClick={() => setShowModal(true)}
+            <button onClick={() => navigate('/admin/ai-job')}
               className="flex items-center gap-2 px-4 py-2.5 bg-forge-orange hover:bg-forge-orange-light text-white text-sm font-semibold rounded-xl transition-colors">
               <Plus size={15} /> New Job
             </button>

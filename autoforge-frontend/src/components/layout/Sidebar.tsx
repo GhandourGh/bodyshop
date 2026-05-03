@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Briefcase, Users, Car,
   Wrench, Package, Bot, MessageSquare, Settings, LogOut,
-  DollarSign, Shield, Zap,
+  DollarSign, Shield, Zap, Sparkles,
 } from 'lucide-react'
 import logo from '@/assets/logo.svg'
 
@@ -22,6 +22,7 @@ const navGroups = [
   {
     label: 'Intelligence',
     items: [
+      { icon: Sparkles,        label: 'AI Job Wizard', to: '/admin/ai-job' },
       { icon: Bot,             label: 'AI Lab',      to: '/admin/ai' },
       { icon: MessageSquare,   label: 'Messages',    to: '/admin/messages' },
     ],

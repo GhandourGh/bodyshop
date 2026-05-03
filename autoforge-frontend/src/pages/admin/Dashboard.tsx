@@ -88,7 +88,7 @@ export default function Dashboard() {
             <button onClick={() => navigate('/admin/ai')} className="flex items-center gap-2 px-4 py-2.5 glass border border-forge-border hover:border-forge-blue/40 text-sm font-medium rounded-xl transition-all">
               <Bot size={15} className="text-forge-blue" /> Run AI
             </button>
-            <button onClick={() => navigate('/admin/jobs')} className="flex items-center gap-2 px-4 py-2.5 bg-forge-orange hover:bg-forge-orange-light text-white text-sm font-semibold rounded-xl transition-colors">
+            <button onClick={() => navigate('/admin/ai-job')} className="flex items-center gap-2 px-4 py-2.5 bg-forge-orange hover:bg-forge-orange-light text-white text-sm font-semibold rounded-xl transition-colors">
               <Plus size={15} /> New Job
             </button>
           </div>
@@ -230,7 +230,7 @@ export default function Dashboard() {
         <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={7}
           className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: Plus, label: 'New Job', color: '#f97316', to: '/admin/jobs' },
+            { icon: Plus, label: 'New Job', color: '#f97316', to: '/admin/ai-job' },
             { icon: UserPlus, label: 'Add Customer', color: '#3b82f6', to: '/admin/customers' },
             { icon: Bot, label: 'Run AI Analysis', color: '#a855f7', to: '/admin/ai' },
             { icon: AlertTriangle, label: 'View Alerts', color: '#ef4444', to: '/admin/inventory' },
