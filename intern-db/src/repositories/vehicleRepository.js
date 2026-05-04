@@ -7,7 +7,8 @@ export const getAllVehicles = async () => {
         include: {
           users: { select: { name: true } }
         }
-      }
+      },
+      jobs: { select: { id: true, status: true } }
     },
     orderBy: { id: 'desc' }
   });

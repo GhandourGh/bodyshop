@@ -1,12 +1,12 @@
 import * as messageRepo from '@/repositories/messageRepository';
-
-const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+import { getAiServiceUrl, getAiHeaders } from '@/lib/aiFetch';
 
 export const createMessage = async ({ jobId, userId, messageType, customerName, jobDetails, language, channel }) => {
+  const AI_URL = getAiServiceUrl();
   // Generate message content via Groq LLaMA on the AI microservice
   const aiRes = await fetch(`${AI_URL}/generate-message`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAiHeaders(),
     body: JSON.stringify({
       message_type: messageType || 'status_update',
       customer_name: customerName,

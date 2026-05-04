@@ -13,7 +13,9 @@ import { errorResponse } from '@/lib/apiResponse';
  * @returns {{ ok: true } | { error: Response }}
  */
 export const requireRole = (user, allowedRoles) => {
-  if (!allowedRoles.includes(user.role)) {
+  const r = (user.role || '').toLowerCase();
+  const ok = allowedRoles.some((a) => (a || '').toLowerCase() === r);
+  if (!ok) {
     return {
       error: errorResponse(
         `Access denied. Required role: ${allowedRoles.join(' or ')}`,

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { Shield, User, Bot, Briefcase, Package, Wrench, Search, RefreshCw } from 'lucide-react'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { backendClient } from '@/api/client'
 
 type AuditEntry = {
@@ -67,6 +68,7 @@ export default function AuditLog() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">Security</p>

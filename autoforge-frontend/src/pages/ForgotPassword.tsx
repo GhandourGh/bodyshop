@@ -2,21 +2,34 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Mail, ArrowLeft, CheckCircle } from 'lucide-react'
+import axios from 'axios'
+
+const BACKEND = '/backend'
 
 export default function ForgotPassword() {
-  const [email, setEmail]   = useState('')
-  const [sent, setSent]     = useState(false)
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [devHint, setDevHint] = useState<string | null>(null)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email) return
+    setError('')
+    setDevHint(null)
     setLoading(true)
-    // Simulate network delay — no real email in demo
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const res = await axios.post(`${BACKEND}/api/auth/forgot-password`, { email: email.trim() })
+      const data = res.data?.data ?? res.data
+      if (data?.devLink) setDevHint(data.devLink)
       setSent(true)
-    }, 1200)
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { message?: string } } }
+      setError(ax.response?.data?.message || 'Something went wrong. Try again later.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -27,7 +40,6 @@ export default function ForgotPassword() {
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="w-full max-w-md">
 
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
             <div className="w-10 h-10 rounded-xl bg-forge-orange/10 border border-forge-orange/20 flex items-center justify-center group-hover:bg-forge-orange/20 transition-colors">
@@ -39,7 +51,9 @@ export default function ForgotPassword() {
           </Link>
           <h1 className="font-display font-bold text-3xl mb-2">Reset password</h1>
           <p className="text-forge-muted text-sm">
-            {sent ? 'Check your inbox for the reset link.' : "We'll send a reset link to your email."}
+            {sent
+              ? 'If an account exists for that email, we sent instructions.'
+              : "We'll email you a link to set a new password."}
           </p>
         </div>
 
@@ -48,6 +62,9 @@ export default function ForgotPassword() {
             {!sent ? (
               <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <p className="text-sm text-red-400 border border-red-500/30 rounded-xl px-3 py-2">{error}</p>
+                )}
                 <div>
                   <label className="block text-xs font-mono text-forge-muted uppercase tracking-wider mb-2">
                     Email Address
@@ -71,7 +88,7 @@ export default function ForgotPassword() {
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Sending…
                     </>
-                  ) : 'Send Reset Link'}
+                  ) : 'Send reset link'}
                 </button>
               </motion.form>
             ) : (
@@ -80,12 +97,18 @@ export default function ForgotPassword() {
                 <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle size={28} className="text-green-400" />
                 </div>
-                <p className="font-display font-semibold text-lg mb-1">Email sent!</p>
-                <p className="text-sm text-forge-muted mb-6">
-                  We sent a reset link to <span className="text-forge-text font-mono">{email}</span>.<br />
-                  Check your inbox (and spam folder).
+                <p className="font-display font-semibold text-lg mb-1">Check your email</p>
+                <p className="text-sm text-forge-muted mb-4">
+                  If <span className="text-forge-text font-mono">{email}</span> is registered, you will receive a reset link shortly.
+                  Check spam as well.
                 </p>
-                <button onClick={() => { setSent(false); setEmail('') }}
+                {devHint && (
+                  <p className="text-xs font-mono text-left glass border border-forge-border rounded-xl p-3 mb-4 text-forge-muted break-all">
+                    <span className="text-forge-orange">Dev mode (no SMTP):</span><br />
+                    <a href={devHint} className="text-forge-blue-light underline">{devHint}</a>
+                  </p>
+                )}
+                <button onClick={() => { setSent(false); setEmail(''); setDevHint(null) }}
                   className="text-xs font-mono text-forge-blue-light hover:underline">
                   Try a different email
                 </button>

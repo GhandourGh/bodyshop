@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from 'recharts'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { backendClient } from '@/api/client'
 
 const fadeUp = {
@@ -40,6 +41,7 @@ export default function Analytics() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div>
           <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">Reports</p>
           <h1 className="font-display font-bold text-3xl">Analytics</h1>

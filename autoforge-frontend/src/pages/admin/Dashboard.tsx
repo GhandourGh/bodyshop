@@ -7,7 +7,6 @@ import AdminLayout from '@/components/layout/AdminLayout'
 import AnimatedCounter from '@/components/shared/AnimatedCounter'
 import StatusBadge from '@/components/shared/StatusBadge'
 import { backendClient } from '@/api/client'
-import { mockRevenue } from '@/data/mock'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -55,6 +54,11 @@ export default function Dashboard() {
     },
   })
 
+  const { data: revenueData = [] } = useQuery({
+    queryKey: ['analytics-revenue'],
+    queryFn: async () => (await backendClient.get('/api/analytics/revenue-series')).data.data ?? [],
+  })
+
   const lowStockCount = parts.filter((p: any) => p.stock < 10).length
 
   const statusCounts = jobs.reduce((acc: Record<string, number>, job: any) => {
@@ -63,7 +67,9 @@ export default function Dashboard() {
   }, {})
 
   const donutData = Object.entries(statusCounts).map(([name, value]) => ({
-    name, value, color: STATUS_COLORS[name] ?? '#6b7280',
+    name,
+    value: typeof value === 'number' ? value : Number(value),
+    color: STATUS_COLORS[name] ?? '#6b7280',
   }))
 
   const recentJobs = [...jobs].slice(0, 5)
@@ -119,24 +125,24 @@ export default function Dashboard() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Revenue Chart (mock data — revenue tracking not yet in DB) */}
+          {/* Revenue Chart */}
           <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={4}
             className="lg:col-span-2 glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-xs font-mono text-forge-muted mb-1">REVENUE TREND</p>
-                <h3 className="font-display font-semibold text-lg">Last 6 Months</h3>
+                <h3 className="font-display font-semibold text-lg">Last 12 Months</h3>
               </div>
               <div className="text-right">
                 <p className="text-xs text-forge-muted">Total</p>
                 <p className="font-display font-bold text-forge-orange">
-                  ${mockRevenue.reduce((s: number, m: any) => s + m.revenue, 0).toLocaleString()}
+                  ${(revenueData as any[]).reduce((s, m) => s + (m.revenue ?? 0), 0).toLocaleString()}
                 </p>
               </div>
             </div>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockRevenue}>
+                <LineChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
                   <XAxis dataKey="month" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} />
                   <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
@@ -212,7 +218,7 @@ export default function Dashboard() {
                   {recentJobs.map((job: any, i: number) => (
                     <motion.tr key={job.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
                       className="border-b border-forge-border/20 hover:bg-white/2 transition-colors cursor-pointer"
-                      onClick={() => navigate('/admin/jobs')}>
+                      onClick={() => navigate(`/admin/jobs/${job.id}`)}>
                       <td className="px-6 py-4 text-sm font-medium text-forge-text">{job.vehicle}</td>
                       <td className="px-6 py-4 text-sm text-forge-muted">{job.customer}</td>
                       <td className="px-6 py-4"><StatusBadge status={job.status} /></td>
@@ -231,7 +237,7 @@ export default function Dashboard() {
           className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { icon: Plus, label: 'New Job', color: '#f97316', to: '/admin/ai-job' },
-            { icon: UserPlus, label: 'Add Customer', color: '#3b82f6', to: '/admin/customers' },
+            { icon: UserPlus, label: 'Add Customer', color: '#3b82f6', to: '/admin/customers?new=1' },
             { icon: Bot, label: 'Run AI Analysis', color: '#a855f7', to: '/admin/ai' },
             { icon: AlertTriangle, label: 'View Alerts', color: '#ef4444', to: '/admin/inventory' },
           ].map(({ icon: Icon, label, color, to }) => (

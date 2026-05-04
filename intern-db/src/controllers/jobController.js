@@ -1,5 +1,15 @@
-import { getJobs, createJob, deleteJob, updateJob } from '@/services/jobService';
+import { getJobs, createJob, deleteJob, updateJob, getJobDetailById } from '@/services/jobService';
 import { successResponse, errorResponse } from '@/lib/apiResponse';
+
+export const getJob = async (id) => {
+  try {
+    const data = await getJobDetailById(id);
+    if (!data) return errorResponse('Job not found', 404);
+    return successResponse(data, 'Job retrieved');
+  } catch (err) {
+    return errorResponse(err.message, 500);
+  }
+};
 
 export const listJobs = async (request) => {
   try {

@@ -1,16 +1,30 @@
 # Dependencies
 node_modules/
+.pnpm-store/
+
+# Next.js build
 .next/
 out/
 
-# Environment
+# Environment / secrets — NEVER commit real credentials
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
+
+# Common credential files
+*.pem
+*.key
 
 # Prisma
 prisma/migrations/
 
-# Misc
-.DS_Store
+# TypeScript / build cache
+*.tsbuildinfo
+.turbo/
+
+# Logs
 *.log
+
+# OS
+.DS_Store
+Thumbs.db

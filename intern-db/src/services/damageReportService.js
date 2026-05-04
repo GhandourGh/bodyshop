@@ -1,8 +1,8 @@
 import * as damageRepo from '@/repositories/damageReportRepository';
-
-const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+import { getAiServiceUrl, getAiHeaders } from '@/lib/aiFetch';
 
 export const analyzeAndSaveDamageReport = async ({ jobId, imageBuffer, mimeType, filename }) => {
+  const AI_URL = getAiServiceUrl();
   // Call YOLOv8 on the AI microservice
   const formData = new FormData();
   const blob = new Blob([imageBuffer], { type: mimeType });
@@ -10,6 +10,7 @@ export const analyzeAndSaveDamageReport = async ({ jobId, imageBuffer, mimeType,
 
   const aiRes = await fetch(`${AI_URL}/predict-damage`, {
     method: 'POST',
+    headers: getAiHeaders({ jsonContentType: false }),
     body: formData,
   });
 

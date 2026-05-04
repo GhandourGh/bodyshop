@@ -1,0 +1,21 @@
+mechanic_id,name,skill_level,specialty,workload
+1,Ali Hassan,5,glass,0.65
+2,Karim Nasser,5,electrical,0.61
+3,Hassan Faour,2,paint,0.48
+4,Omar Khalil,2,paint,0.15
+5,Samir Khoury,4,body_repair,0.45
+6,Rami Aziz,2,body_repair,0.66
+7,Tarek Mansour,2,body_repair,0.15
+8,Bilal Haddad,4,electrical,0.59
+9,Jad Saad,5,suspension,0.75
+10,Nabil Frem,5,suspension,0.63
+11,Wissam Bou Malhab,3,body_repair,0.7
+12,Elias Geagea,3,glass,0.76
+13,Georges Abi Nader,5,electrical,0.37
+14,Fadi Karam,5,body_repair,0.24
+15,Michel Hayek,2,suspension,0.53
+16,Antoine Gemayel,2,engine,0.29
+17,Rabih Sleiman,2,suspension,0.77
+18,Charbel Murr,2,body_repair,0.29
+19,Pierre Nasr,5,paint,0.35
+20,Maroun Azar,5,paint,0.36

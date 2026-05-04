@@ -1,8 +1,7 @@
 import * as aiRepo from '@/repositories/aiRepository';
 import prisma from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
-
-const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+import { getAiServiceUrl, getAiHeaders } from '@/lib/aiFetch';
 
 export const getPredictions = async () => {
   const preds = await aiRepo.getAllPredictions();
@@ -42,6 +41,10 @@ const deriveVehicleType = (vehicle) => {
 };
 
 export const processAi = async (jobId, type) => {
+  const AI_URL = getAiServiceUrl();
+  const jsonHeaders = getAiHeaders();
+  const forecastHeaders = getAiHeaders({ jsonContentType: false });
+
   const job = await getJobContext(jobId);
   if (!job) throw new Error(`Job ${jobId} not found`);
 
@@ -71,12 +74,12 @@ export const processAi = async (jobId, type) => {
     const [costRes, timeRes] = await Promise.all([
       fetch(`${AI_URL}/predict-cost`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(payload),
       }),
       fetch(`${AI_URL}/predict-time`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(payload),
       }),
     ]);
@@ -106,7 +109,7 @@ export const processAi = async (jobId, type) => {
   } else if (type === 'Mechanic Recommendation') {
     const res = await fetch(`${AI_URL}/assign-mechanic`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({
         job_type: 'body_repair',
         required_skill: 3,
@@ -122,17 +125,17 @@ export const processAi = async (jobId, type) => {
     const topScore = data.ranked_mechanics?.[0]?.score ?? 0.85;
     confidence = Math.min(Math.max(topScore / 5, 0), 1);
 
-    // Assign top mechanic to the job
+    // Assign top mechanic to the job — write the mechanics.id (not users.id)
     if (data.ranked_mechanics?.length > 0) {
-      // Map by name to find the matching DB mechanic user
       const topName = data.ranked_mechanics[0].name;
-      const matchingUser = await prisma.users.findFirst({
-        where: { name: topName, role: 'mechanic' }
+      const matchingMechanic = await prisma.mechanics.findFirst({
+        where: { users: { is: { name: topName, role: 'mechanic' } } },
+        select: { id: true },
       });
-      if (matchingUser) {
+      if (matchingMechanic) {
         await prisma.jobs.update({
           where: { id: jobId },
-          data: { assigned_mechanic_id: matchingUser.id }
+          data: { assigned_mechanic_id: matchingMechanic.id },
         });
       }
     }
@@ -141,8 +144,9 @@ export const processAi = async (jobId, type) => {
     const categories = ['bumpers', 'headlights', 'body-panels', 'mirrors', 'windshields'];
     const forecasts = await Promise.all(
       categories.map(cat =>
-        fetch(`${AI_URL}/forecast-inventory?part_category=${cat}&days=30`)
-          .then(r => r.ok ? r.json() : null)
+        fetch(`${AI_URL}/forecast-inventory?part_category=${cat}&days=30`, {
+          headers: forecastHeaders,
+        }).then(r => r.ok ? r.json() : null)
       )
     );
 

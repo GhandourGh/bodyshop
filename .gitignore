@@ -1,42 +1,116 @@
+# =============================================================================
+# Secrets — NEVER commit any .env file with real credentials
+# =============================================================================
+.env
+.env.*
+!.env.example
+intern-db/.env
+intern-db/.env.*
+!intern-db/.env.example
+autoforge-frontend/.env
+autoforge-frontend/.env.*
+!autoforge-frontend/.env.example
+
+# Common credential files
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials.json
+service-account*.json
+
+# =============================================================================
 # Python
+# =============================================================================
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
 .Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Virtual environment
+# Virtual environments
 venv/
 env/
 .venv/
+.env-py/
 
-# Environment variables (NEVER commit real keys)
-.env
-.env.local
-intern-db/.env
-intern-db/.env.local
-autoforge-frontend/.env
-autoforge-frontend/.env.local
+# =============================================================================
+# Node / JavaScript
+# =============================================================================
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+*.tsbuildinfo
 
-# IDE
-.vscode/
-.idea/
-*.swp
+# =============================================================================
+# Build artifacts
+# =============================================================================
+intern-db/.next/
+intern-db/out/
+autoforge-frontend/dist/
+autoforge-frontend/dist-ssr/
+.turbo/
+.cache/
 
-# OS
-.DS_Store
-Thumbs.db
+# =============================================================================
+# Test artifacts
+# =============================================================================
+autoforge-frontend/test-results/
+autoforge-frontend/playwright-report/
+coverage/
 
-# ML artifacts (too big for git)
+# =============================================================================
+# ML artifacts (regeneratable, too big for git)
+# =============================================================================
 *.pt
 *.pkl
 *.joblib
+*.h5
+*.onnx
 data/*.csv
+!data/mechanics.csv
 data/raw/
 data/processed/
+runs/
 
+# =============================================================================
 # Notebooks
+# =============================================================================
 .ipynb_checkpoints/
 
+# =============================================================================
 # Logs
+# =============================================================================
 *.log
-runs/
+logs/
+
+# =============================================================================
+# IDE / Editor
+# =============================================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.history/
+
+# AI assistant local config (per-machine; do not commit)
+.cursor/
+.claude/
+.agents/
+
+# =============================================================================
+# OS
+# =============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -9,6 +9,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { useToast } from '@/components/shared/Toast'
 import { predictDamage, predictTime, predictCost, assignMechanic, generateMessage } from '@/api'
 import { backendClient } from '@/api/client'
@@ -376,6 +377,8 @@ export default function AIJob() {
   return (
     <AdminLayout>
       <div className="max-w-3xl mx-auto space-y-8">
+
+        <BackButton />
 
         {/* Header */}
         <div>

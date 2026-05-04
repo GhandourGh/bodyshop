@@ -11,3 +11,20 @@ export const getAllJobs = async () => {
     orderBy: { created_at: 'desc' }
   });
 };
+
+/** Full job row for detail views (staff or portal). */
+export const getJobById = async (id) => {
+  return prisma.jobs.findUnique({
+    where: { id },
+    include: {
+      customers: {
+        include: { users: { select: { id: true, name: true, email: true } } },
+      },
+      vehicles: { select: { id: true, make: true, model: true, year: true, vin: true } },
+      damage_reports: {
+        orderBy: { created_at: 'desc' },
+        take: 20,
+      },
+    },
+  });
+};

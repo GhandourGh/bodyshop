@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Wrench, Star } from 'lucide-react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { backendClient } from '@/api/client'
 
 export default function Mechanics() {
@@ -23,6 +24,7 @@ export default function Mechanics() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div>
           <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">Operations</p>
           <h1 className="font-display font-bold text-3xl">Mechanics</h1>

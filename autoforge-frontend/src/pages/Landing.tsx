@@ -4,8 +4,6 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, Scan, DollarSign, CalendarCheck, ChevronDown, Shield, Zap, Star, Wrench, Users, Trophy } from 'lucide-react'
 import Navbar from '@/components/layout/Navbar'
 import AnimatedCounter from '@/components/shared/AnimatedCounter'
-import logo from '@/assets/logo.svg'
-
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.6, delay: i * 0.1 } }),
@@ -60,17 +58,23 @@ export default function Landing() {
 
           <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={3}
             className="flex flex-wrap gap-4">
-            <Link to="/ai-demo"
+            <Link to="/portal"
               className="group flex items-center gap-2 px-7 py-3.5 bg-forge-orange hover:bg-forge-orange-light text-white font-semibold rounded-xl transition-all duration-200 glow-orange">
-              Try AI Demo
+              Get a repair quote
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link to="/login"
+            <Link to="/ai-demo"
               className="flex items-center gap-2 px-7 py-3.5 glass border border-forge-border hover:border-forge-blue/40 text-forge-text font-semibold rounded-xl transition-all duration-200">
-              Admin Login
+              Try AI Demo
               <ArrowRight size={16} />
             </Link>
           </motion.div>
+          <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={4}
+            className="mt-6 text-sm text-forge-muted">
+            <Link to="/login" className="text-forge-blue-light hover:underline">Sign in</Link>
+            {' · '}
+            <Link to="/register" className="text-forge-blue-light hover:underline">Create account</Link>
+          </motion.p>
         </motion.div>
 
         <motion.div style={{ opacity: heroOpacity }}
@@ -200,15 +204,19 @@ export default function Landing() {
       {/* ── FOOTER ── */}
       <footer className="border-t border-forge-border/30 py-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="AutoForge logo" className="w-6 h-6 object-contain rounded" />
+          <div className="flex items-center">
             <span className="font-display font-bold text-sm">Auto<span className="text-gradient-orange">Forge</span></span>
           </div>
           <p className="text-forge-muted text-xs">© 2026 AutoForge. Precision-engineered bodyshop intelligence.</p>
           <div className="flex gap-6">
-            {['Privacy', 'Terms', 'Contact'].map(l => (
-              <a key={l} href="#" className="text-forge-muted hover:text-forge-text text-xs transition-colors">{l}</a>
-            ))}
+            <Link to="/login" className="text-forge-muted hover:text-forge-text text-xs transition-colors">Sign In</Link>
+            <Link to="/register" className="text-forge-muted hover:text-forge-text text-xs transition-colors">Sign Up</Link>
+            <a
+              href="mailto:hello@autoforge.demo"
+              className="text-forge-muted hover:text-forge-text text-xs transition-colors"
+            >
+              Contact
+            </a>
           </div>
         </div>
       </footer>

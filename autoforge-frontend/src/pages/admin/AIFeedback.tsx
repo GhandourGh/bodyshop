@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Brain, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react'
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { backendClient } from '@/api/client'
 
 const fadeUp = {
@@ -53,6 +54,7 @@ export default function AIFeedback() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div>
           <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">Intelligence</p>
           <h1 className="font-display font-bold text-3xl">AI Feedback</h1>

@@ -1,3 +1,15 @@
+import { existsSync } from 'fs'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
+import dotenv from 'dotenv'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+/** Repo root `bodyshop-ai/.env` — same AI_API_KEY as FastAPI; intern-db/.env wins if both set. */
+const rootEnv = join(__dirname, '..', '.env')
+if (existsSync(rootEnv)) {
+  dotenv.config({ path: rootEnv, override: false })
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,

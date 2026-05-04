@@ -6,6 +6,7 @@ import { useToast } from '@/components/shared/Toast'
 import { downloadInvoicesPdf } from '@/lib/pdf/invoicesPdf'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { backendClient } from '@/api/client'
 import * as XLSX from 'xlsx'
 
@@ -70,6 +71,7 @@ export default function Finance() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">Finance</p>

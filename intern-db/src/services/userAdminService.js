@@ -16,9 +16,8 @@ export const getAllUsers = async () => {
 };
 
 export const createUser = async (data) => {
-  const { name, email, password, role } = data;
+  const { name, email, password, role, phone } = data;
 
-  // Check existing
   const existing = await prisma.users.findUnique({ where: { email } });
   if (existing) {
     const err = new Error('Email already in use');
@@ -29,12 +28,11 @@ export const createUser = async (data) => {
   const hashedPassword = await bcrypt.hash(password, 12);
   const userId = uuidv4();
 
-  // Prepare relations based on role
   let customersData = undefined;
   let mechanicsData = undefined;
 
   if (role === 'customer') {
-    customersData = { create: { id: uuidv4() } };
+    customersData = { create: { id: uuidv4(), phone: phone || null } };
   } else if (role === 'mechanic') {
     mechanicsData = { create: { id: uuidv4() } };
   }
@@ -55,7 +53,8 @@ export const createUser = async (data) => {
       email: true,
       role: true,
       created_at: true,
-    }
+      customers: { select: { id: true, phone: true } },
+    },
   });
 
   return user;
@@ -112,20 +111,15 @@ export const deleteUser = async (id) => {
       await prisma.customers.delete({ where: { id: customerId } });
     }
   } else if (user.role === 'mechanic') {
-    // Unassign this user from any jobs where they were the mechanic
-    await prisma.jobs.updateMany({
-      where: { assigned_mechanic_id: id },
-      data: { assigned_mechanic_id: null }
-    });
-
-    // Also check if they are linked via the mechanics profile table
-    const mechanic = await prisma.mechanics.findFirst({ where: { user_id: id } });
-    if (mechanic) {
+    // assigned_mechanic_id always references mechanics.id — clear those rows first
+    const profiles = await prisma.mechanics.findMany({ where: { user_id: id } });
+    const mechIds = profiles.map((m) => m.id);
+    if (mechIds.length > 0) {
       await prisma.jobs.updateMany({
-        where: { assigned_mechanic_id: mechanic.id },
-        data: { assigned_mechanic_id: null }
+        where: { assigned_mechanic_id: { in: mechIds } },
+        data: { assigned_mechanic_id: null },
       });
-      await prisma.mechanics.delete({ where: { id: mechanic.id } });
+      await prisma.mechanics.deleteMany({ where: { id: { in: mechIds } } });
     }
   }
 

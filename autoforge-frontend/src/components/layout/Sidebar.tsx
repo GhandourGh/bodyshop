@@ -6,8 +6,7 @@ import {
   DollarSign, Shield, Zap, Sparkles, ClipboardList, BookOpen, KeyRound,
   BarChart2, Brain, HardDrive,
 } from 'lucide-react'
-import logo from '@/assets/logo.svg'
-
+import { clearAuth, isAdminRole } from '@/lib/auth'
 const navGroups = [
   {
     label: 'Management',
@@ -44,26 +43,15 @@ const navGroups = [
   },
 ]
 
-function isAdminRole(): boolean {
-  try {
-    const raw = localStorage.getItem('af_user')
-    if (!raw) return false
-    return (JSON.parse(raw) as { role?: string }).role?.toLowerCase() === 'admin'
-  } catch {
-    return false
-  }
-}
-
 export default function Sidebar() {
   const location = useLocation()
   const admin = isAdminRole()
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[220px] bg-forge-card border-r border-forge-border/50 flex flex-col z-40">
-      {/* Logo */}
+      {/* Wordmark */}
       <div className="h-16 flex items-center px-5 border-b border-forge-border/30">
-        <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="AutoForge logo" className="w-7 h-7 object-contain rounded-md" />
+        <Link to="/" className="flex items-center">
           <span className="font-display font-bold text-base tracking-tight">
             Auto<span className="text-gradient-orange">Forge</span>
           </span>
@@ -108,7 +96,7 @@ export default function Sidebar() {
           <Settings size={16} />
           Settings
         </Link>
-        <button onClick={() => { localStorage.removeItem('af_token'); localStorage.removeItem('af_user'); window.location.href = '/login' }}
+        <button onClick={() => { clearAuth(); window.location.href = '/login' }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-forge-muted hover:text-red-400 hover:bg-red-500/5 transition-all">
           <LogOut size={16} />
           Sign Out

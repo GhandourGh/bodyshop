@@ -32,7 +32,7 @@ export async function GET(request) {
         avgCost,
         avgHours,
         skillLevel: m.skill_level,
-        workload: Math.round((m.workload || 0) * 100),
+        workload: Math.max(0, Math.min(100, Math.round(m.workload ?? 0))),
       };
     }).sort((a, b) => b.totalJobs - a.totalJobs);
 

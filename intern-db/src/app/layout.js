@@ -1,10 +1,10 @@
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'] });
-
+/**
+ * Required Next.js root layout for the API server.
+ * The frontend is served by Vite from a separate process — see autoforge-frontend/.
+ */
 export const metadata = {
-  title: 'Bodyshop Management System',
-  description: 'Car bodyshop management backend with JWT authentication',
+  title: 'AutoForge API',
+  description: 'AutoForge bodyshop management JSON API.',
 };
 
 export default function RootLayout({ children }) {
@@ -15,8 +15,8 @@ export default function RootLayout({ children }) {
         style={{
           margin: 0,
           padding: 0,
-          boxSizing: 'border-box',
-          fontFamily: inter.style.fontFamily,
+          fontFamily:
+            "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
           backgroundColor: '#0f0f0f',
         }}
       >

@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { authenticate } from '@/middlewares/authMiddleware';
 import { successResponse, errorResponse } from '@/lib/apiResponse';
-
-const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+import { getAiServiceUrl, getAiHeaders } from '@/lib/aiFetch';
 
 export async function POST(request) {
   const auth = authenticate(request);
@@ -12,9 +11,10 @@ export async function POST(request) {
     const { text } = await request.json();
     if (!text || !text.trim()) return errorResponse('text is required', 400);
 
+    const AI_URL = getAiServiceUrl();
     const aiRes = await fetch(`${AI_URL}/analyze-sentiment`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAiHeaders(),
       body: JSON.stringify({ text }),
     });
 

@@ -1,13 +1,49 @@
-venv/
+# Secrets — never bake into images
 .env
+.env.*
+!.env.example
+intern-db/.env
+autoforge-frontend/.env
+*.pem
+*.key
+
+# Python
+venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+
+# ML training data (only mechanics.csv is shipped — see Dockerfile)
 data/*.csv
 !data/mechanics.csv
-notebooks/
-scripts/
-tests/
-ui/
-images/
-*.md
+data/raw/
+data/processed/
+runs/
+
+# Repo metadata
 .git/
+.gitignore
+.github/
+.cursor/
+.claude/
+.agents/
+
+# Docs / scratch
+*.md
+notebooks/
+tests/
+images/
+
+# OS
+.DS_Store
+Thumbs.db

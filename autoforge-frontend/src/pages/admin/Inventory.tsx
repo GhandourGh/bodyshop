@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Package, AlertTriangle, CheckCircle } from 'lucide-react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { backendClient } from '@/api/client'
 
 const LOW_STOCK_THRESHOLD = 10
@@ -27,6 +28,7 @@ export default function Inventory() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">Supply Chain</p>

@@ -7,18 +7,33 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies & build output
+node_modules/
+dist/
+dist-ssr/
 *.local
+*.tsbuildinfo
 
-# Editor directories and files
+# Environment / secrets — NEVER commit real credentials
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/
+
+# Editor / IDE
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS
+.DS_Store
+Thumbs.db

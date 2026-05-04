@@ -9,6 +9,30 @@ export const findUserByEmail = async (email) => {
   return prisma.users.findUnique({ where: { email } });
 };
 
+/** Full row for auth (includes password_hash, totp fields). */
+export const findCredentialUserByEmail = async (email) => {
+  return prisma.users.findUnique({ where: { email } });
+};
+
+/**
+ * @param {string} id
+ * @param {object} data — Prisma users update input
+ */
+export const updateUserById = async (id, data) => {
+  return prisma.users.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      created_at: true,
+      totp_enabled: true,
+    },
+  });
+};
+
 /**
  * Find a user by their ID (excludes password).
  * @param {string} id
@@ -21,10 +45,16 @@ export const findUserById = async (id) => {
       name: true,
       email: true,
       role: true,
+      totp_enabled: true,
       created_at: true,
       customers: true,
     },
   });
+};
+
+/** Full row for TOTP disable / internal auth. */
+export const findCredentialUserById = async (id) => {
+  return prisma.users.findUnique({ where: { id } });
 };
 
 /**

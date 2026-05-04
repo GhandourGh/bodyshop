@@ -152,15 +152,16 @@ export const deleteJob = async (id) => {
 };
 
 export const updateJob = async (id, data) => {
-  const { customerId, vehicleId, mechanicId, status, estimatedCost, actorId } = data;
+  const { customerId, vehicleId, mechanicId, status, estimatedCost, estimatedTime, actorId } = data;
   const job = await prisma.jobs.update({
     where: { id },
     data: {
-      ...(customerId && { customer_id: customerId }),
-      ...(vehicleId && { vehicle_id: vehicleId }),
-      ...(mechanicId && { assigned_mechanic_id: mechanicId }),
-      ...(status && { status }),
-      ...(estimatedCost && { estimated_cost: parseFloat(estimatedCost) }),
+      ...(customerId !== undefined && { customer_id: customerId }),
+      ...(vehicleId !== undefined && { vehicle_id: vehicleId }),
+      ...(mechanicId !== undefined && { assigned_mechanic_id: mechanicId }),
+      ...(status !== undefined && { status }),
+      ...(estimatedCost !== undefined && estimatedCost !== '' && { estimated_cost: parseFloat(estimatedCost) }),
+      ...(estimatedTime !== undefined && estimatedTime !== '' && { estimated_time: parseInt(estimatedTime) }),
     }
   });
   logAudit({ userId: actorId, action: status ? `STATUS:${status.toUpperCase()}` : 'UPDATE', entity: 'job', entityId: id });

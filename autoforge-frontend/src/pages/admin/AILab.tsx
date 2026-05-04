@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Bot, Activity, ArrowRight } from 'lucide-react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 
 const latencyData = [
   { model: 'Damage', latency: 820 },
@@ -18,6 +19,7 @@ export default function AILab() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div>
           <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">Intelligence</p>
           <h1 className="font-display font-bold text-3xl">AI Lab</h1>

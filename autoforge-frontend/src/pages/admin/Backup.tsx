@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Download, Database, Clock, BookOpen, CheckCircle, AlertTriangle } from 'lucide-react'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 import { backendClient } from '@/api/client'
 import { useToast } from '@/components/shared/Toast'
 
@@ -47,6 +48,7 @@ export default function Backup() {
   return (
     <AdminLayout>
       <div className="space-y-6 max-w-3xl">
+        <BackButton />
         <div>
           <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">System</p>
           <h1 className="font-display font-bold text-3xl">Backup & Restore</h1>

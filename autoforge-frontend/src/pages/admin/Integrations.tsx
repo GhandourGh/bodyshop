@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Zap, CheckCircle, AlertCircle, Clock, RefreshCw, Activity, Bot, Database, Eye } from 'lucide-react'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import AdminLayout from '@/components/layout/AdminLayout'
+import BackButton from '@/components/shared/BackButton'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -62,9 +64,14 @@ export default function Integrations() {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <BackButton />
         <div>
           <p className="text-forge-muted text-sm font-mono uppercase tracking-widest mb-1">System</p>
           <h1 className="font-display font-bold text-3xl">API & Integrations</h1>
+          <p className="text-sm text-forge-muted mt-2">
+            Encrypted API keys and outbound call logs live in{' '}
+            <Link to="/admin/vault" className="text-forge-blue-light hover:underline">Vault & logs</Link> (admin).
+          </p>
         </div>
 
         {/* Summary */}
@@ -99,7 +106,7 @@ export default function Integrations() {
                 <XAxis dataKey="hour" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} />
                 <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} />
                 <Tooltip contentStyle={{ background: '#111118', border: '1px solid #2a2a3e', borderRadius: 8, fontSize: 12 }}
-                  formatter={(v: number) => [v, 'Calls']} />
+                  formatter={(v) => [Number(v ?? 0), 'Calls']} />
                 <Line type="monotone" dataKey="calls" stroke="#3b82f6" strokeWidth={2.5} dot={{ fill: '#3b82f6', r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>

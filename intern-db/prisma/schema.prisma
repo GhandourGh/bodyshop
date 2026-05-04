@@ -24,6 +24,7 @@ model audit_logs {
   entity     String?
   entity_id  String?   @db.Uuid
   created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model customers {
@@ -68,6 +69,7 @@ model jobs {
   job_parts            job_parts[]
   customers            customers?       @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   vehicles             vehicles?        @relation(fields: [vehicle_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  mechanics            mechanics?       @relation(fields: [assigned_mechanic_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   messages             messages[]
 }
 
@@ -76,7 +78,9 @@ model mechanics {
   user_id     String? @db.Uuid
   skill_level Int?    @default(1)
   workload    Int?    @default(0)
+  specialty   String?
   users       users?  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  jobs        jobs[]
 }
 
 model messages {
@@ -91,24 +95,94 @@ model messages {
 }
 
 model parts {
-  id        String      @id @db.Uuid
-  name      String?
-  stock     Int?        @default(0)
-  price     Decimal?    @db.Decimal
-  job_parts job_parts[]
+  id          String        @id @db.Uuid
+  name        String?
+  stock       Int?          @default(0)
+  price       Decimal?      @db.Decimal
+  category    String?
+  job_parts   job_parts[]
+  parts_usage parts_usage[]
+}
+
+model parts_usage {
+  id         String   @id @db.Uuid
+  part_id    String?  @db.Uuid
+  category   String?
+  used_on    DateTime @db.Date
+  quantity   Int
+  parts      parts?   @relation(fields: [part_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
-  id            String      @id @db.Uuid
-  name          String
-  email         String      @unique
-  password_hash String
-  role          String
-  created_at    DateTime?   @default(now()) @db.Timestamp(6)
-  customers     customers[]
-  mechanics     mechanics[]
-  messages      messages[]
+  id                  String                @id @db.Uuid
+  name                String
+  email               String                @unique
+  password_hash       String
+  role                String
+  totp_secret         String?               @db.Text
+  totp_enabled        Boolean               @default(false)
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  customers           customers[]
+  mechanics           mechanics[]
+  messages            messages[]
+  password_reset_tokens password_reset_tokens[]
+  booking_inquiries   booking_inquiries[]
+  integration_credentials integration_credentials[]
+  audit_logs          audit_logs[]
+}
+
+model integration_logs {
+  id              String    @id @db.Uuid
+  integration_key String
+  status          String
+  message         String?   @db.Text
+  duration_ms     Int?
+  meta            Json?
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([integration_key])
+  @@index([created_at])
+}
+
+model integration_credentials {
+  id                 String    @id @db.Uuid
+  name               String
+  service_slug       String
+  username_plain     String?   @db.Text
+  secret_encrypted   String    @db.Text
+  notes              String?   @db.Text
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+  updated_at         DateTime? @default(now()) @db.Timestamp(6)
+  created_by_user_id String?   @db.Uuid
+  users              users?    @relation(fields: [created_by_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([service_slug])
+}
+
+model booking_inquiries {
+  id         String    @id @db.Uuid
+  user_id    String?   @db.Uuid
+  name       String?
+  email      String?
+  phone      String?
+  payload    Json
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([user_id])
+  @@index([email])
+}
+
+model password_reset_tokens {
+  id         String    @id @db.Uuid
+  user_id    String    @db.Uuid
+  token_hash String    @unique
+  expires_at DateTime  @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id])
 }
 
 model vehicles {

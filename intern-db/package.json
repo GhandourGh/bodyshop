@@ -3,18 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "seed:demo": "node scripts/seed-demo.js"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "@prisma/client": "^6.7.0",
     "bcryptjs": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.0",
+    "otplib": "^12.0.1",
     "next": "^16.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
